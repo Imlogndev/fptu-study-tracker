@@ -1,40 +1,54 @@
 # FPTU Study & Multi-Course Tracker (`fptu-study-tracker`)
 
-A personal Java application designed for **FPT University Software Engineering students** to manage multiple courses across semesters, track study tasks/deadlines, log practice sessions (e.g., `CSD201` DSA problems, `PRJ301` labs), and calculate target GPA.
+A full-stack **Spring Boot 3** web application built for **FPT University Software Engineering students** to manage multiple courses across semesters, track study tasks, log daily DSA/lab practice sessions, and calculate GPA.
+
+> **Live Demo:** *(Deploy via Render using the included `Dockerfile` & `render.yaml` — paste your live URL here once deployed!)*  
+> **API Docs:** `/swagger-ui.html`
 
 ---
 
-## 🎯 Project Evolution Roadmap
-- **Phase 1 (Current — Java Core + DBI202):** Clean layered architecture (`model` -> `service` -> `dao`), SQL schema design, Maven structure, and JUnit 5 unit tests.
-- **Phase 2 (Semester 4 — `PRJ301` & `SWR302`):** Upgrade to JDBC + SQL Server/PostgreSQL, Servlet/JSP web interface, and full SRS/ERD documentation in `docs/`.
-- **Phase 3 (Backend Production — Spring Boot 3):** Migrate to RESTful APIs with Spring Boot, Spring Data JPA, Spring Security (JWT), Docker Compose, and live cloud deployment.
+## 🛠️ Tech Stack
+- **Backend:** Java 17, Spring Boot 3, Spring Web, Spring Data JPA, Bean Validation
+- **Database:** PostgreSQL (Production via `SPRING_DATASOURCE_URL`) / H2 (Local & CI)
+- **Frontend:** Responsive HTML5, CSS3, Vanilla JavaScript (`src/main/resources/static/index.html`)
+- **API Documentation:** Springdoc OpenAPI (Swagger UI)
+- **DevOps & Testing:** JUnit 5, MockMvc, GitHub Actions CI, Multi-stage `Dockerfile`, `render.yaml`
 
 ---
 
-## ✨ Core Features (Multi-Course Support)
-- **Multi-Semester & Course Management:** Organize courses by semester (`PRO192`, `DBI202`, `CSD201`, `PRJ301`, `SWR302`, `JPD123`, `IOT102`, etc.) with credits and status (`PLANNED`, `IN_PROGRESS`, `COMPLETED`).
-- **Task & Deadline Tracking per Course:** Attach assignments, labs, and exam prep tasks to any course.
-- **Practice Log:** Track daily study hours and coding exercises (e.g., LeetCode/DSA topics for `CSD201`).
-- **GPA Calculator:** Compute weighted GPA across completed courses.
+## ✨ Core Features
+- **Multi-Course & Semester Management:** Filter courses by semester (`PRO192`, `DBI202`, `LAB211`, `CSD201`, `PRJ301`, `SWR302`, `JPD123`, `IOT102`, etc.) and add/update courses with scores.
+- **Task & Deadline Tracking:** Attach prioritized tasks (`HIGH`, `MEDIUM`, `LOW`) to any course and toggle completion.
+- **Practice Log:** Record daily study/LeetCode minutes per course.
+- **Live GPA & Summary Dashboard:** Automatically calculates weighted GPA across completed courses.
 
 ---
 
-## 🗄️ Database Schema
-Designed following **DBI202** normalization principles. See [`sql/schema.sql`](sql/schema.sql) for table definitions (`courses`, `study_tasks`, `practice_logs`).
+## 📡 REST API Endpoints
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/health` | Health check for cloud hosting |
+| `GET` | `/api/summary` | Weighted GPA, pending tasks, total practice minutes |
+| `GET` | `/api/courses?semester=4` | List all courses (optional semester filter) |
+| `POST` | `/api/courses` | Create or update a course |
+| `GET` | `/api/tasks` | List all study tasks |
+| `POST` | `/api/tasks` | Add a task to an existing course |
+| `PATCH` | `/api/tasks/{id}/toggle` | Toggle task completion |
+| `GET` | `/api/practice-logs` | List practice logs |
+| `POST` | `/api/practice-logs` | Log a study/DSA practice session |
 
 ---
 
-## 🚀 How to Run (Java 8+)
+## 🚀 Deploy to Cloud (Render.com Free Tier)
+1. Push this repository to GitHub (`Imlogndev/fptu-study-tracker`).
+2. Log in to [Render](https://render.com) with GitHub -> **New +** -> **Web Service** -> select `fptu-study-tracker`.
+3. Render automatically detects `Dockerfile` (or use **Blueprints** with `render.yaml`).
+4. *(Optional for persistent data)* Create a free PostgreSQL database on Render/Neon and set `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD` in Environment Variables.
 
-Compile and run directly from the project root:
+---
 
+## 💻 Run Locally (Java 17 + Maven)
 ```powershell
-javac --release 8 -encoding UTF-8 -d out (Get-ChildItem -Recurse -Filter *.java src\main\java | ForEach-Object { $_.FullName })
-java -cp out com.nhatlong.studytracker.Main
+mvn spring-boot:run
 ```
-
-Or with Maven (when installed):
-
-```powershell
-mvn compile exec:java -Dexec.mainClass="com.nhatlong.studytracker.Main"
-```
+Then open `http://localhost:8080` (Dashboard) or `http://localhost:8080/swagger-ui.html` (Swagger UI).

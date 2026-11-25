@@ -1,0 +1,18 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: fptu-study-tracker
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:studytracker;DB_CLOSE_DELAY=-1;MODE=PostgreSQL}
+    username: ${SPRING_DATASOURCE_USERNAME:sa}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html

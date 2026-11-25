@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FPTU Study & Multi-Course Tracker</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --border: #334155;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --accent: #38bdf8;
+            --green: #22c55e;
+            --amber: #f59e0b;
+            --red: #ef4444;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            padding: 24px;
+        }
+        .container { max-width: 1180px; margin: 0 auto; }
+        header {
+            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+            gap: 12px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border);
+        }
+        header h1 { font-size: 1.5rem; }
+        header p { color: var(--muted); font-size: 0.9rem; }
+        .btn-link {
+            color: var(--bg); background: var(--accent); text-decoration: none;
+            padding: 8px 14px; border-radius: 8px; font-weight: 600; font-size: 0.9rem;
+        }
+        .stats {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px; margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 12px; padding: 16px;
+        }
+        .stat-label { color: var(--muted); font-size: 0.85rem; }
+        .stat-value { font-size: 1.75rem; font-weight: 700; margin-top: 4px; color: var(--accent); }
+        .grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; }
+        @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+        .panel {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 12px; padding: 18px; margin-bottom: 20px;
+        }
+        .panel-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;
+        }
+        .panel-header h2 { font-size: 1.1rem; }
+        form.inline-form {
+            display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px;
+        }
+        input, select, button {
+            background: #0f172a; color: var(--text); border: 1px solid var(--border);
+            border-radius: 8px; padding: 8px 10px; font-size: 0.88rem;
+        }
+        input { flex: 1; min-width: 110px; }
+        button {
+            background: var(--accent); color: var(--bg); border: none;
+            font-weight: 600; cursor: pointer; padding: 8px 14px;
+        }
+        button:hover { opacity: 0.9; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+        th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); }
+        th { color: var(--muted); font-weight: 600; }
+        .badge {
+            display: inline-block; padding: 2px 8px; border-radius: 999px;
+            font-size: 0.75rem; font-weight: 600;
+        }
+        .COMPLETED { background: rgba(34, 197, 94, 0.18); color: var(--green); }
+        .IN_PROGRESS { background: rgba(56, 189, 248, 0.18); color: var(--accent); }
+        .PLANNED { background: rgba(148, 163, 184, 0.18); color: var(--muted); }
+        .HIGH { background: rgba(239, 68, 68, 0.18); color: var(--red); }
+        .MEDIUM { background: rgba(245, 158, 11, 0.18); color: var(--amber); }
+        .LOW { background: rgba(148, 163, 184, 0.18); color: var(--muted); }
+        .list-item {
+            display: flex; justify-content: space-between; align-items: center; gap: 10px;
+            padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem;
+        }
+        .list-item:last-child { border-bottom: none; }
+        .done-text { text-decoration: line-through; color: var(--muted); }
+        .error-msg { color: var(--red); font-size: 0.85rem; margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <div>
+            <h1>FPTU Study & Multi-Course Tracker</h1>
+            <p>Built by Phạm Trần Nhật Long (@Imlogndev) — Spring Boot 3 + JPA + PostgreSQL/H2</p>
+        </div>
+        <a class="btn-link" href="/swagger-ui.html" target="_blank">Swagger API Docs</a>
+    </header>
+
+    <section class="stats">
+        <div class="stat-card">
+            <div class="stat-label">Completed GPA (Scale 10)</div>
+            <div class="stat-value" id="gpaVal">-</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">In-Progress Courses</div>
+            <div class="stat-value" id="inProgressVal">-</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Pending Tasks</div>
+            <div class="stat-value" id="pendingTasksVal">-</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Total Practice Time</div>
+            <div class="stat-value" id="practiceMinsVal">-</div>
+        </div>
+    </section>
+
+    <div class="grid">
+        <div>
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Courses</h2>
+                    <select id="semesterFilter" onchange="loadCourses()">
+                        <option value="">All Semesters</option>
+                        <option value="2">Semester 2</option>
+                        <option value="3">Semester 3</option>
+                        <option value="4">Semester 4</option>
+                    </select>
+                </div>
+                <form class="inline-form" onsubmit="addCourse(event)">
+                    <input id="cCode" placeholder="Code (e.g. SWP391)" required>
+                    <input id="cName" placeholder="Course Name" required>
+                    <input id="cSem" type="number" min="1" max="9" value="4" style="max-width:70px" required>
+                    <input id="cCred" type="number" min="1" max="10" value="3" style="max-width:70px" required>
+                    <select id="cStatus">
+                        <option value="IN_PROGRESS">IN_PROGRESS</option>
+                        <option value="COMPLETED">COMPLETED</option>
+                        <option value="PLANNED">PLANNED</option>
+                    </select>
+                    <input id="cScore" type="number" step="0.1" min="0" max="10" placeholder="Score" style="max-width:85px">
+                    <button type="submit">Save</button>
+                </form>
+                <div id="courseError" class="error-msg"></div>
+                <table>
+                    <thead>
+                        <tr><th>Sem</th><th>Code</th><th>Course Name</th><th>Status</th><th>Score</th></tr>
+                    </thead>
+                    <tbody id="coursesBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div>
+            <div class="panel">
+                <div class="panel-header"><h2>Study Tasks</h2></div>
+                <form class="inline-form" onsubmit="addTask(event)">
+                    <input id="tCourse" placeholder="Course (CSD201)" style="max-width:120px" required>
+                    <input id="tTitle" placeholder="Task title" required>
+                    <select id="tPriority">
+                        <option value="HIGH">HIGH</option>
+                        <option value="MEDIUM" selected>MEDIUM</option>
+                        <option value="LOW">LOW</option>
+                    </select>
+                    <button type="submit">Add</button>
+                </form>
+                <div id="taskError" class="error-msg"></div>
+                <div id="tasksList"></div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><h2>Practice Logs (DSA / Lab)</h2></div>
+                <form class="inline-form" onsubmit="addLog(event)">
+                    <input id="lCourse" placeholder="Course (CSD201)" style="max-width:120px" required>
+                    <input id="lTopic" placeholder="Topic practiced" required>
+                    <input id="lMins" type="number" min="1" value="45" style="max-width:80px" required>
+                    <button type="submit">Log</button>
+                </form>
+                <div id="logError" class="error-msg"></div>
+                <div id="logsList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function loadSummary() {
+        const res = await fetch('/api/summary');
+        const s = await res.json();
+        document.getElementById('gpaVal').textContent = s.completedGpa.toFixed(2);
+        document.getElementById('inProgressVal').textContent = s.inProgressCourses;
+        document.getElementById('pendingTasksVal').textContent = s.pendingTasks;
+        document.getElementById('practiceMinsVal').textContent = s.totalPracticeMinutes + ' mins';
+    }
+
+    async function loadCourses() {
+        const sem = document.getElementById('semesterFilter').value;
+        const url = sem ? `/api/courses?semester=${sem}` : '/api/courses';
+        const res = await fetch(url);
+        const data = await res.json();
+        document.getElementById('coursesBody').innerHTML = data.map(c => `
+            <tr>
+                <td>${c.semester}</td>
+                <td><strong>${c.code}</strong></td>
+                <td>${c.name}</td>
+                <td><span class="badge ${c.status}">${c.status}</span></td>
+                <td>${c.score !== null ? c.score.toFixed(1) : '-'}</td>
+            </tr>
+        `).join('');
+    }
+
+    async function loadTasks() {
+        const res = await fetch('/api/tasks');
+        const data = await res.json();
+        document.getElementById('tasksList').innerHTML = data.map(t => `
+            <div class="list-item">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                    <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTask(${t.id})">
+                    <span class="${t.done ? 'done-text' : ''}"><strong>[${t.courseCode}]</strong> ${t.title}</span>
+                </label>
+                <span class="badge ${t.priority}">${t.priority}</span>
+            </div>
+        `).join('');
+    }
+
+    async function loadLogs() {
+        const res = await fetch('/api/practice-logs');
+        const data = await res.json();
+        document.getElementById('logsList').innerHTML = data.map(l => `
+            <div class="list-item">
+                <span><strong>[${l.courseCode}]</strong> ${l.topic} <small style="color:var(--muted)">(${l.loggedDate})</small></span>
+                <span class="badge IN_PROGRESS">${l.minutes}m</span>
+            </div>
+        `).join('');
+    }
+
+    async function addCourse(e) {
+        e.preventDefault();
+        document.getElementById('courseError').textContent = '';
+        const scoreVal = document.getElementById('cScore').value;
+        const res = await fetch('/api/courses', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                code: document.getElementById('cCode').value,
+                name: document.getElementById('cName').value,
+                semester: Number(document.getElementById('cSem').value),
+                credits: Number(document.getElementById('cCred').value),
+                status: document.getElementById('cStatus').value,
+                score: scoreVal ? Number(scoreVal) : null
+            })
+        });
+        if (!res.ok) {
+            const err = await res.json();
+            document.getElementById('courseError').textContent = err.error || 'Failed to save course';
+            return;
+        }
+        e.target.reset();
+        await refreshAll();
+    }
+
+    async function addTask(e) {
+        e.preventDefault();
+        document.getElementById('taskError').textContent = '';
+        const res = await fetch('/api/tasks', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                courseCode: document.getElementById('tCourse').value,
+                title: document.getElementById('tTitle').value,
+                priority: document.getElementById('tPriority').value
+            })
+        });
+        if (!res.ok) {
+            const err = await res.json();
+            document.getElementById('taskError').textContent = err.error || 'Failed to add task';
+            return;
+        }
+        e.target.reset();
+        await refreshAll();
+    }
+
+    async function toggleTask(id) {
+        await fetch(`/api/tasks/${id}/toggle`, { method: 'PATCH' });
+        await refreshAll();
+    }
+
+    async function addLog(e) {
+        e.preventDefault();
+        document.getElementById('logError').textContent = '';
+        const res = await fetch('/api/practice-logs', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                courseCode: document.getElementById('lCourse').value,
+                topic: document.getElementById('lTopic').value,
+                minutes: Number(document.getElementById('lMins').value)
+            })
+        });
+        if (!res.ok) {
+            const err = await res.json();
+            document.getElementById('logError').textContent = err.error || 'Failed to log practice';
+            return;
+        }
+        e.target.reset();
+        await refreshAll();
+    }
+
+    async function refreshAll() {
+        await Promise.all([loadSummary(), loadCourses(), loadTasks(), loadLogs()]);
+    }
+
+    refreshAll();
+</script>
+</body>
+</html>
