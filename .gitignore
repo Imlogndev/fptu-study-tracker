@@ -1,0 +1,26 @@
+# Compiled class files
+*.class
+target/
+build/
+out/
+
+# Log & package files
+*.log
+*.jar
+*.war
+*.ear
+
+# IDE & OS files
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+nbproject/private/
+.DS_Store
+Thumbs.db
+
+# Environment & secrets
+.env
+*.local.properties
